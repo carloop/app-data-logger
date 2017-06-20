@@ -20,7 +20,9 @@ Carloop<CarloopRevision2> carloop;
 SYSTEM_THREAD(ENABLED);
 
 void setup() {
-  serial.begin();
+  Serial.begin();
+  delay(1000);
+  Serial.println("Data logger starting");
 
   // If you car uses different CAN bus speed, change it here
   carloop.setCANSpeed(500000);
@@ -36,14 +38,15 @@ void openFiles() {
     sd.initErrorPrint();
     return;
   }
+  Serial.println("SD Card opened");
 
-  unsigned gpsFilexIndex = 0;
-  while (sd.exists(String::format(GPS_LOG_FILENAME, gpsFilexIndex++).c_str())) {}
+  unsigned fileIndex = 0;
+  while (sd.exists(String::format(GPS_LOG_FILENAME, ++fileIndex).c_str())) {}
 
-  if (!gpsLogFile.open(String::format(GPS_LOG_FILENAME, gpsFilexIndex).c_str(), O_RDWR | O_CREAT | O_AT_END)) {
-    sd.errorPrint(String::format("Error opening " GPS_LOG_FILENAME, gpsFilexIndex).c_str());
+  if (!gpsLogFile.open(String::format(GPS_LOG_FILENAME, fileIndex).c_str(), O_RDWR | O_CREAT | O_AT_END)) {
+    sd.errorPrint(String::format("Error opening " GPS_LOG_FILENAME, fileIndex).c_str());
   }
-  Serial.printlnf("SD card file opened " GPS_LOG_FILENAME, gpsFilexIndex);
+  Serial.printlnf("Opened SD card file " GPS_LOG_FILENAME, fileIndex);
 }
 
 void loop() {
@@ -65,8 +68,9 @@ String formatGPSPosition(TinyGPSPlus &gps) {
   String s;
   s += String::format("GPS %6d chars: ", gps.charsProcessed());
   s += formatFloat(gps.location.lat(), gps.location.isValid(), 11, 6);
-  s += formatloat(gps.location.lng(), gps.location.isValid(), 12, 6);
-  s += formatateTime(gps.date, gps.time);
+  s += formatFloat(gps.location.lng(), gps.location.isValid(), 12, 6);
+  s += formatDateTime(gps.date, gps.time);
+  return s;
 }
 
 String formatFloat(float val, bool valid, int len, int prec)
